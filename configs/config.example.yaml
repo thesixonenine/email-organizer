@@ -1,0 +1,47 @@
+api:
+  host: "127.0.0.1"
+  port: 8080
+
+mailboxes:
+  - name: "个人QQ邮箱"
+    protocol: "imap"
+    imap_server: "imap.qq.com"
+    imap_port: 993
+    email: "your-qq-number@qq.com"
+    auth_code: "your-authorization-code"
+    fetch_count: 500
+
+  - name: "公司Exchange邮箱"
+    protocol: "exchange"
+    exchange_type: "ews"
+    ews_endpoint: "https://mail.company.com/EWS/Exchange.asmx"
+    email: "your-name@company.com"
+    auth_code: "your-password"
+    fetch_count: 200
+
+  - name: "Office 365邮箱"
+    protocol: "exchange"
+    exchange_type: "graph"
+    tenant_id: "your-tenant-id"
+    client_id: "your-client-id"
+    email: "user@contoso.onmicrosoft.com"
+    auth_code: "your-oauth-secret"
+
+rules:
+  - name: "归档通知邮件"
+    enabled: true
+    trigger: "on_arrival"
+    conditions:
+      subject_contains: "[通知]"
+      sender_domain: "notification-service.com"
+    action:
+      type: "move"
+      target: "归档/通知"
+
+  - name: "标记垃圾邮件为已读"
+    enabled: true
+    trigger: "on_arrival"
+    conditions:
+      subject_contains: "SPAM"
+    action:
+      type: "mark_read"
