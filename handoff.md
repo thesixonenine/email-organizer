@@ -2,10 +2,10 @@
 
 ## 项目状态快照
 
-> **生成时间**: 2026-06-23
-> **当前分支**: main
-> **最新 Commit**: `8919598` — Initial commit
-> **项目阶段**: 设计/启动阶段
+> **生成时间**: 2026-06-23 10:30 (CST)
+> **当前分支**: `feat/email-organizer-implementation`
+> **最新 Commit**: `3d19bc7` — feat: implement engine, API, scheduler, main wiring, and config example
+> **项目阶段**: 核心功能实现完成（~70%）
 
 ---
 
@@ -15,35 +15,53 @@
 
 | 模块 | 完成度 | 说明 |
 |------|--------|------|
-| 项目初始化 | 100% | go.mod, .gitignore, LICENSE 已配置 |
-| 设计文档 | 100% | AGENTS.md, TASKS.md, architecture.md, decisions.md, handoff.md 已创建 |
-| **整体进度** | **~5%** | 项目骨架创建中 |
+| 项目初始化 | 100% | go.mod, Makefile, .gitignore, LICENSE |
+| 设计文档 | 100% | AGENTS.md, architecture.md, TASKS.md, decisions.md, handoff.md |
+| 配置管理 | 100% | YAML 加载 + IMAP/Exchange 校验（3/3 测试通过）|
+| 数据模型 | 100% | Mailbox, Message, Rule, RuleLog, RuleCondition, RuleAction |
+| 数据库 | 100% | SQLite + WAL + 4 张表 + 3 个 Repository |
+| MailClient 接口+工厂 | 100% | `mail/types` 接口 + 工厂按 protocol 创建 |
+| IMAP 客户端 | 100% | go-imap v2：登录/文件夹/邮件/移动/标记/删除 |
+| Exchange EWS 客户端 | 100% | SOAP/XML：FindFolder/FindItem/MoveItem/UpdateItem |
+| 规则引擎 | 100% | Matcher(5条件) + Executor(4动作) + Engine(规则循环) |
+| RESTful API | 100% | chi, 10 端点, 统一响应, 日志/恢复中间件 |
+| 定时调度器 | 100% | time.Ticker 分钟级轮询 |
+| 主入口 wiring | 100% | 依赖注入, 启动登录, 优雅关闭 |
+| **整体进度** | **~70%** | 测试覆盖率待提升, 部分功能待完善 |
 
-### 进行中
+### 待完成
 
-| 任务 | 进度 | 说明 |
-|------|------|------|
-| — | — | 尚未开始编码 |
+| 模块 | 完成度 | 说明 |
+|------|--------|------|
+| 测试覆盖 | 10% | 仅 config + store 有测试（2个测试文件）|
+| SMTP 转发/回复 | 0% | Forward/Reply 返回 "not implemented" |
+| Microsoft Graph | 0% | stub 实现 |
+| 文档 | 20% | 详细 README 待补充 |
+| Docker 化 | 0% | 待实现 |
 
 ---
 
 ## 代码统计
 
 ```
-┌──────────────────────┬──────────┬────────────┐
-│ 文件                 │ 行数     │ 类型       │
-├──────────────────────┼──────────┼────────────┤
-│ go.mod               │ 3        │ Go module  │
-│ .gitignore           │ 23       │ 配置       │
-│ AGENTS.md            │ ~180     │ 文档       │
-│ TASKS.md             │ ~120     │ 文档       │
-│ architecture.md      │ ~400     │ 文档       │
-│ decisions.md         │ ~140     │ 文档       │
-│ handoff.md           │ ~80      │ 文档       │
-├──────────────────────┼──────────┼────────────┤
-│ 总计                 │ ~946     │ 全部文档   │
-│ Go 源码              │ 0        │ 未开始     │
-└──────────────────────┴──────────┴────────────┘
+┌──────────────────────────────┬────────┬─────────────────┐
+│ 包                           │ 行数   │ 测试文件         │
+├──────────────────────────────┼────────┼─────────────────┤
+│ cmd/organizer/               │ 224    │ 无              │
+│ internal/config/             │ 245    │ config_test.go  │
+│ internal/models/             │ 102    │ 无              │
+│ internal/store/              │ 467    │ db_test.go      │
+│ internal/mail/               │ 14     │ 无              │
+│ internal/mail/types/         │ 25     │ 无              │
+│ internal/mail/imap/          │ 175    │ 无              │
+│ internal/mail/exchange/      │ 252    │ 无              │
+│ internal/engine/             │ 133    │ 无              │
+│ internal/api/                │ 329    │ 无              │
+│ internal/scheduler/          │ 72     │ 无              │
+├──────────────────────────────┼────────┼─────────────────┤
+│ Go 源码总计                  │ 2038   │ 2 个测试文件     │
+│ 配置文件/文档/Makefile       │ ~600   │ —               │
+└──────────────────────────────┴────────┴─────────────────┘
 ```
 
 ---
@@ -54,27 +72,26 @@
 
 | 风险 | 可能性 | 影响 | 缓解措施 |
 |------|--------|------|---------|
-| IMAP 授权码获取流程文档不清晰 | 中 | 用户无法登录邮箱 | 需要在 README 中详细说明各邮箱服务商的授权码获取方式 |
-| 邮箱 IMAP 兼容性差异 | 中 | 部分邮箱无法正常连接 | 主流邮箱（QQ、163、Gmail、Outlook）需逐一测试 |
-| Exchange EWS 实现复杂度 | 中 | EWS SOAP/XML 协议调试困难 | 使用 encoding/xml 逐步实现，参考 EWS 官方文档 |
-| Exchange 认证方式多样 | 中 | Basic/OAuth2 不同认证方式实现 | 按 exchange_type 区分认证逻辑 |
-| 授权码明文存储在配置文件 | 高 | 安全风险 | 配置文件权限 600，后续可增加加密存储 |
+| 测试覆盖率过低 | 高 | 质量风险 | 优先补充 engine/mail/api 核心包测试 |
+| IMAP/Exchange 未在真实服务器验证 | 高 | 兼容性问题 | 需要对照各主流邮箱测试 |
+| Forward/Reply 未实现 | 高 | 规则动作无效 | 需要 SMTP 客户端 |
+| EWS SOAP 解析可能不完整 | 中 | 特定邮箱故障 | 需要真实 Exchange 服务器测试 |
 
 ### 中优先级
 
 | 风险 | 可能性 | 影响 | 缓解措施 |
 |------|--------|------|---------|
-| 大量邮件时内存占用过大 | 低 | 影响稳定性 | 分批拉取，限制每批数量 |
-| 多条规则匹配同一邮件时执行顺序 | 中 | 规则冲突 | 按优先级排序执行，日志记录每次匹配 |
-| API 未认证暴露在公网 | 中 | 安全风险 | 默认绑定 127.0.0.1，后续增加 Token 认证 |
-| IMAP 与 Exchange 协议行为差异 | 中 | 移动/删除等操作表现不一致 | 统一接口层屏蔽差异，记录详细日志便于排查 |
+| go-imap v2 beta.8 API 不稳定 | 中 | 升级成本 | 正式发布后适配 |
+| Graph API stub 未实现 | 中 | Exchange Online 不可用 | 后续迭代实现 OAuth2 流程 |
+| API 无认证暴露 | 中 | 安全风险 | 默认 127.0.0.1 绑定 |
+| 大邮箱拉取性能 | 低 | 同步延迟 | 分批拉取，限制每批 500 封 |
 
 ### 低优先级
 
 | 风险 | 可能性 | 影响 | 缓解措施 |
 |------|--------|------|---------|
-| SQLite 并发写入冲突 | 低 | 写入失败 | 使用 WAL 模式，必要时加锁 |
-| 转发/回复功能需要 SMTP 配置 | 中 | 功能不可用 | 需要在配置中增加 SMTP 相关字段 |
+| SQLite 并发写入 | 低 | 写入失败 | WAL 模式已启用 |
+| 授权码明文存储 | 低 | 安全风险 | 配置文件权限 600 |
 
 ---
 
@@ -82,58 +99,61 @@
 
 | 决策 | 选择 | 原因 |
 |------|------|------|
-| 开发语言 | Go 1.26 | 部署简单，并发强，IMAP/Exchange 库生态好 |
-| 数据库 | SQLite | 嵌入式零配置，足够单机使用 |
+| 开发语言 | Go 1.26 | 部署简单，并发强 |
+| 数据库 | SQLite + WAL | 嵌入式零配置 |
 | HTTP 框架 | chi v5 | 轻量，兼容标准库 |
-| 配置格式 | YAML | 可读性好，支持注释，适合复杂嵌套 |
-| 协议架构 | IMAP + Exchange 双协议（接口+工厂模式） | 统一接口，对上层透明，按 protocol 字段创建对应客户端 |
-| IMAP 实现 | go-imap v2 | 最成熟的 Go IMAP 库 |
-| Exchange 实现 | EWS (SOAP) 为主 + Graph 可选 | EWS 兼容本地和在线，Graph 更现代但仅限 Exchange Online |
-| 定时策略 | 分钟级轮询 | 实现简单，对邮件场景足够 |
-| 规则引擎 | Matcher + Executor 分离 | 单一职责，易于扩展和测试 |
+| 配置格式 | YAML + Viper | 可读性好，支持嵌套 |
+| 协议架构 | MailClient 接口 + 工厂模式 | 避免循环依赖，协议透明 |
+| IMAP 实现 | go-imap v2 | 原生 Go 实现 |
+| Exchange 实现 | EWS (SOAP) | 兼容本地+在线 |
+| Schema 管理 | 内嵌 Go const 字符串 | 避免 embed 路径限制 |
+| 定时策略 | 分钟级轮询 | 简单可靠 |
+| 规则引擎 | Matcher + Executor 分离 | 可扩展可测试 |
 
 ---
 
 ## 已知问题
 
-_（暂无，项目处于初始阶段，所有问题已记录在 decisions.md 的待确认项中）_
+| ID | 问题 | 状态 |
+|----|------|------|
+| #1 | `mailboxRepo.GetByID(0)` 设计缺陷已修复 | ✅ 已修复 |
+| #2 | `mail` 包与 `exchange` 包循环依赖已解决（提取 `mail/types`）| ✅ 已修复 |
+| #3 | `//go:embed` 不支持 `..` 路径，改用 Go const | ✅ 已修复 |
+| #4 | go-imap v2 beta.8 API 适配多次迭代 | ✅ 已修复 |
+| #5 | 取消 `_ = mb` 占位符避免编译警告 | ✅ 已修复 |
 
 ---
 
 ## 下一步建议
 
-### 立即行动 (优先级 P0)
+### 立即 (P0)
 
-1. **创建项目目录结构** — 按照 architecture.md 的目录结构创建所有文件夹和占位文件
-2. **实现配置管理模块** — config 包，YAML 配置加载和校验
-3. **初始化 SQLite 数据库** — 创建数据库连接和迁移脚本
+1. **补充核心测试** — engine/matcher（5条件）+ engine/executor（4动作）+ mail/imap + mail/exchange
+2. **在真实邮箱验证** — 用 QQ/163/Gmail 测试 IMAP，用 Exchange Online 测试 EWS
 
 ### 短期 (P1)
 
-4. **定义数据模型** — models 包的核心结构体
-5. **实现 IMAP 客户端** — 邮箱登录、文件夹列表、邮件拉取
-6. **实现存储层 CRUD** — 所有表的增删改查
+3. **实现 SMTP 转发/回复** — `internal/mail/smtp/` 子包
+4. **实现 Graph API** — OAuth2 流程 + REST 调用
+5. **API Token 认证** — 简单 Bearer Token 中间件
 
 ### 中期 (P2)
 
-7. **实现规则引擎** — Matcher + Executor
-8. **实现 API 层** — 邮件查看和规则管理接口
-9. **实现调度器** — 定时轮询
-
-### 长期 (P3)
-
-10. **全面测试覆盖** — mock IMAP 服务器，单元测试，集成测试
-11. **Docker 化部署** — Dockerfile + docker-compose
-12. **CI/CD 配置** — 自动测试和构建
+6. **Docker 化** — 多阶段构建 Dockerfile
+7. **CI/CD** — GitHub Actions 自动测试+构建
+8. **README** — 完整使用文档 + API 文档
 
 ---
 
 ## 联系信息
 
 - **项目目录**: `/home/simple/github/email-organizer/`
-- **配置文件**: `configs/config.yaml` (待创建)
+- **当前分支**: `feat/email-organizer-implementation`
+- **配置文件**: `configs/config.yaml` (用户自建，已 gitignore)
+- **配置示例**: `configs/config.example.yaml`
 - **数据库文件**: `data/email-organizer.db` (首次运行后生成)
-- **设计文档**: `docs/superpowers/specs/` (待创建)
+- **构建命令**: `make build` 或 `go build -o bin/organizer ./cmd/organizer/`
+- **测试命令**: `make test` 或 `go test ./... -count=1`
 
 ---
 

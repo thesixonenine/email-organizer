@@ -115,16 +115,54 @@
   - .gitignore 中已排除 config.yaml，避免误提交
   - 后续可考虑加密存储
 
-### D-010: 模块间通信方式
+### D-017: SQL Schema 内嵌策略
 
 - **状态**: ✅ 已确认
 - **时间**: 2026-06-23
-- **背景**: 各模块之间需要解耦
-- **决策**: 通过接口（interface）依赖注入
+- **背景**: 需要将 `migrations/001_init.sql` 在运行时加载到 SQLite 数据库
+- **决策**: 使用 Go const 字符串将 schema SQL 直接内嵌在 `internal/store/schema.go` 中
 - **理由**:
-  - main.go 做为组合根(wiring)，负责创建具体实例并注入
-  - 方便测试时注入 mock 实现
-  - 模块之间通过 models 包共享数据结构
+  - `//go:embed` 不支持包含 `..` 的路径，无法从 `internal/store/` 嵌入 `migrations/001_init.sql`
+  - 内嵌为 const 字符串是 Go 中最简单可靠的方案
+  - `migrations/001_init.sql` 保留为参考副本
+- **替代方案**: `//go:embed` + 将 migration 文件移动到 `internal/store/` 子目录（增加了文件位置不一致的问题）
+
+### D-018: MailClient 接口放置策略
+
+- **状态**: ✅ 已确认
+- **时间**: 2026-06-23
+- **背景**: `mail/factory.go` 需要引用 `mail/imap`、`mail/exchange` 包，而这两个包需要实现 `MailClient` 接口，但接口定义在 `mail` 包中会导致循环依赖
+- **决策**: 将 `MailClient` 接口和 `Folder` 类型抽取到单独的 `mail/types` 子包中
+- **理由**:
+  - `mail/types` 包只依赖 `models` 包（无循环依赖）
+  - `mail/clients.go` 通过类型别名 `type MailClient = types.MailClient` 保持外部 API 一致
+  - `mail/factory.go` 引用 `mail/imap`、`mail/exchange` 和 `mail/types`（无循环）
+- **注意**: 外部使用者仍通过 `mail.MailClient` 访问接口，无需知道 `mail/types` 的存在
+
+### D-019: go-imap v2 命令结果处理方式
+
+- **状态**: ✅ 已确认
+- **时间**: 2026-06-23
+- **背景**: go-imap v2 beta.8 的 API 与 v1 完全不同，命令结果通过 `.Wait()` 或 `.Collect()` 获取
+- **决策**: 使用 `.Collect()` 获取批量结果，使用 `.Wait()` 获取单条结果
+- **理由**:
+  - `FetchCommand.Collect()` → `[]*FetchMessageBuffer`（批量消息数据）
+  - `UIDSearch.SearchData.All` → `imap.UIDSet` 类型断言后调用 `.Nums()` 获取 UID 列表
+  - `Store()` 返回 `*FetchCommand`，调用 `.Collect()` 忽略结果
+  - `Expunge()` 返回 `*ExpungeCommand`，调用 `.Close()` 等待完成
+- **注意**: go-imap v2 当前为 beta.8，正式版 API 可能变化
+
+### D-020: 授权码缓存策略
+
+- **状态**: ✅ 已确认
+- **时间**: 2026-06-23
+- **背景**: 数据库不存储授权码（安全策略 D-009），但运行时需要授权码创建 MailClient 实例
+- **决策**: main.go 启动时从 `config.yaml` 读取授权码，缓存在内存中的 `clientCache` 里，通过 `mailFactory` 闭包携带
+- **理由**:
+  - 授权码仅在进程生命周期内存中存在
+  - 不落入数据库，不写入日志
+  - 进程重启后需要重新读取配置文件
+- **注意**: mailFactory 闭包需要同时访问 config（授权码）和 DB（其他配置）
 
 ---
 
@@ -151,6 +189,10 @@
 | ADR-003 | IMAP + Exchange 双协议（接口+工厂模式） | ACCEPTED | D-005 |
 | ADR-004 | 规则引擎 Matcher/Executor 分离 | ACCEPTED | D-006 |
 | ADR-005 | 分钟级轮询而非 IMAP IDLE | ACCEPTED | D-008 |
+| ADR-006 | SQL Schema 内嵌为 Go const | ACCEPTED | D-017 |
+| ADR-007 | MailClient 接口抽取到 mail/types 子包 | ACCEPTED | D-018 |
+| ADR-008 | go-imap v2 beta Collect/Wait 模式 | ACCEPTED | D-019 |
+| ADR-009 | 授权码内存缓存 + config 加载 | ACCEPTED | D-020 |
 
 ---
 
