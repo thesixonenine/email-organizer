@@ -8,20 +8,22 @@ import (
 	"github.com/emersion/go-imap/v2"
 	"github.com/emersion/go-imap/v2/imapclient"
 
+	"email-organizer/internal/mail/smtp"
 	"email-organizer/internal/mail/types"
 	"email-organizer/internal/models"
 )
 
 type Client struct {
-	server   string
-	port     int
-	email    string
-	authCode string
-	client   *imapclient.Client
+	server     string
+	port       int
+	email      string
+	authCode   string
+	client     *imapclient.Client
+	smtpClient *smtp.Client
 }
 
-func NewClient(server string, port int, email, authCode string) *Client {
-	return &Client{server: server, port: port, email: email, authCode: authCode}
+func NewClient(server string, port int, email, authCode string, smtpClient *smtp.Client) *Client {
+	return &Client{server: server, port: port, email: email, authCode: authCode, smtpClient: smtpClient}
 }
 
 func (c *Client) Login() error {
@@ -167,9 +169,15 @@ func (c *Client) DeleteMessage(folder, uid string) error {
 }
 
 func (c *Client) ForwardMessage(msg *models.Message, targetEmail string) error {
-	return fmt.Errorf("IMAP forward not implemented — requires SMTP client")
+	if c.smtpClient == nil {
+		return fmt.Errorf("SMTP not configured — cannot forward")
+	}
+	return c.smtpClient.SendForward(msg, targetEmail)
 }
 
 func (c *Client) ReplyMessage(msg *models.Message, replyText string) error {
-	return fmt.Errorf("IMAP reply not implemented — requires SMTP client")
+	if c.smtpClient == nil {
+		return fmt.Errorf("SMTP not configured — cannot reply")
+	}
+	return c.smtpClient.SendReply(msg, replyText)
 }

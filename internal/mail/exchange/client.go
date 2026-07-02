@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"email-organizer/internal/mail/smtp"
 	"email-organizer/internal/mail/types"
 	"email-organizer/internal/models"
 )
@@ -18,9 +19,10 @@ type Client struct {
 	email      string
 	password   string
 	httpClient *http.Client
+	smtpClient *smtp.Client
 }
 
-func NewClient(endpoint, email, password string) (*Client, error) {
+func NewClient(endpoint, email, password string, smtpClient *smtp.Client) (*Client, error) {
 	return &Client{
 		endpoint: endpoint,
 		email:    email,
@@ -31,6 +33,7 @@ func NewClient(endpoint, email, password string) (*Client, error) {
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: false},
 			},
 		},
+		smtpClient: smtpClient,
 	}, nil
 }
 
@@ -213,9 +216,15 @@ func (c *Client) DeleteMessage(folder, uid string) error {
 }
 
 func (c *Client) ForwardMessage(msg *models.Message, targetEmail string) error {
-	return fmt.Errorf("EWS forward: not fully implemented")
+	if c.smtpClient == nil {
+		return fmt.Errorf("SMTP not configured — cannot forward")
+	}
+	return c.smtpClient.SendForward(msg, targetEmail)
 }
 
 func (c *Client) ReplyMessage(msg *models.Message, replyText string) error {
-	return fmt.Errorf("EWS reply: not fully implemented")
+	if c.smtpClient == nil {
+		return fmt.Errorf("SMTP not configured — cannot reply")
+	}
+	return c.smtpClient.SendReply(msg, replyText)
 }
