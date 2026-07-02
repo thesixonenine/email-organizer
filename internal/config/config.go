@@ -23,6 +23,8 @@ type MailboxConfig struct {
 	Email        string `mapstructure:"email"`
 	AuthCode     string `mapstructure:"auth_code"`
 	FetchCount   int    `mapstructure:"fetch_count"`
+	SMTPServer   string `mapstructure:"smtp_server"`
+	SMTPPort     int    `mapstructure:"smtp_port"`
 }
 
 type RuleConfig struct {
