@@ -2,10 +2,10 @@
 
 ## 项目状态快照
 
-> **生成时间**: 2026-06-23 10:30 (CST)
-> **当前分支**: `feat/email-organizer-implementation`
-> **最新 Commit**: `3d19bc7` — feat: implement engine, API, scheduler, main wiring, and config example
-> **项目阶段**: 核心功能实现完成（~70%）
+> **生成时间**: 2026-07-02 12:00 (CST)
+> **当前分支**: `feature/smtp-forward-reply`
+> **最新 Commit**: `03e7646` — docs: add SMTP config and forward/reply rule examples
+> **项目阶段**: 功能完善中（~75%）
 
 ---
 
@@ -34,10 +34,11 @@
 | 模块 | 完成度 | 说明 |
 |------|--------|------|
 | 测试覆盖 | 10% | 仅 config + store 有测试（2个测试文件）|
-| SMTP 转发/回复 | 0% | Forward/Reply 返回 "not implemented" |
+| SMTP 转发/回复 | 100% | SMTP 客户端包、工厂集成、IMAP/EWS/Graph Forward/Reply |
 | Microsoft Graph | 0% | stub 实现 |
 | 文档 | 20% | 详细 README 待补充 |
 | Docker 化 | 0% | 待实现 |
+| **整体进度** | **~75%** | SMTP 转发/回复已完成，测试覆盖率待提升 |
 
 ---
 
@@ -53,13 +54,14 @@
 │ internal/store/              │ 467    │ db_test.go      │
 │ internal/mail/               │ 14     │ 无              │
 │ internal/mail/types/         │ 25     │ 无              │
-│ internal/mail/imap/          │ 175    │ 无              │
-│ internal/mail/exchange/      │ 252    │ 无              │
+│ internal/mail/smtp/          │ 87     │ 无              │
+│ internal/mail/imap/          │ 185    │ 无              │
+│ internal/mail/exchange/      │ 270    │ 无              │
 │ internal/engine/             │ 133    │ 无              │
 │ internal/api/                │ 329    │ 无              │
 │ internal/scheduler/          │ 72     │ 无              │
 ├──────────────────────────────┼────────┼─────────────────┤
-│ Go 源码总计                  │ 2038   │ 2 个测试文件     │
+│ Go 源码总计                  │ ~2200  │ 2 个测试文件     │
 │ 配置文件/文档/Makefile       │ ~600   │ —               │
 └──────────────────────────────┴────────┴─────────────────┘
 ```
@@ -74,7 +76,7 @@
 |------|--------|------|---------|
 | 测试覆盖率过低 | 高 | 质量风险 | 优先补充 engine/mail/api 核心包测试 |
 | IMAP/Exchange 未在真实服务器验证 | 高 | 兼容性问题 | 需要对照各主流邮箱测试 |
-| Forward/Reply 未实现 | 高 | 规则动作无效 | 需要 SMTP 客户端 |
+| Forward/Reply 未实现 | 高 | 规则动作无效 | ✅ 已解决 — SMTP 客户端已实现 |
 | EWS SOAP 解析可能不完整 | 中 | 特定邮箱故障 | 需要真实 Exchange 服务器测试 |
 
 ### 中优先级
@@ -133,7 +135,6 @@
 
 ### 短期 (P1)
 
-3. **实现 SMTP 转发/回复** — `internal/mail/smtp/` 子包
 4. **实现 Graph API** — OAuth2 流程 + REST 调用
 5. **API Token 认证** — 简单 Bearer Token 中间件
 
@@ -148,7 +149,7 @@
 ## 联系信息
 
 - **项目目录**: `/home/simple/github/email-organizer/`
-- **当前分支**: `feat/email-organizer-implementation`
+- **当前分支**: `feature/smtp-forward-reply`
 - **配置文件**: `configs/config.yaml` (用户自建，已 gitignore)
 - **配置示例**: `configs/config.example.yaml`
 - **数据库文件**: `data/email-organizer.db` (首次运行后生成)

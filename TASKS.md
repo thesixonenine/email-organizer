@@ -3,13 +3,13 @@
 ## 项目状态总览
 
 ```
-[███████████████░░░░░░] 70% 完成
+[████████████████░░░░░░] 75% 完成
 ```
 
-> **最后更新**: 2026-06-23
-> **当前阶段**: 核心功能实现完成
-> **当前分支**: feat/email-organizer-implementation
-> **最新 Commit**: `3d19bc7`
+> **最后更新**: 2026-07-02
+> **当前阶段**: 功能完善中（SMTP 转发/回复已完成）
+> **当前分支**: feature/smtp-forward-reply
+> **最新 Commit**: `03e7646`
 
 ---
 
@@ -32,6 +32,7 @@
 | T-013 | RESTful API（路由/中间件/处理器） | 2026-06-23 | chi router + 10个端点 + 日志/恢复中间件 + 统一响应格式 |
 | T-014 | 主入口依赖注入 | 2026-06-23 | cmd/organizer/main.go 完整 wiring |
 | T-015 | 配置示例 | 2026-06-23 | configs/config.example.yaml 含 IMAP+EWS+Graph 三种示例 |
+| T-021 | SMTP 转发/回复实现 | 2026-07-02 | SMTP 客户端、工厂集成、IMAP/EWS/Graph Forward/Reply 实现 |
 
 ---
 
@@ -59,8 +60,8 @@
 
 | ID | 任务 | 预估工时 | 依赖 | 说明 |
 |----|------|---------|------|------|
-| T-021 | **SMTP 转发/回复实现** | 6h | T-008, T-009 | ForwardMessage/ReplyMessage 的 SMTP 实现 |
-| T-022 | **Graph API 实现** | 8h | T-009 | 完成 Microsoft Graph OAuth2 + REST 调用 |
+| T-021 | **SMTP 转发/回复实现** | 6h | 完成 | 2026-07-02 | SMTP 客户端包、IMAP/EWS/Graph 集成，Forward/Reply 真实实现 |
+| T-022 | **Graph API 实现** | 8h | — | — | 完成 Microsoft Graph OAuth2 + REST 调用 |
 | T-023 | **错误恢复机制** | 3h | T-012 | IMAP 断连重试、Exchange 会话超时重连 |
 | T-024 | **API Token 认证** | 2h | T-013 | 增加简单 Token 认证中间件 |
 
@@ -95,5 +96,5 @@
 | TD-001 | go-imap v2 beta.8 版本 | 低 | beta 版 API 可能变化，正式版需适配 |
 | TD-002 | EWS SOAP XML 响应解析 | 中 | 当前实现为简化版，实际 Exchange 服务器响应结构可能不同 |
 | TD-003 | Graph API 为 stub | 中 | 需要补充 OAuth2 认证流程 |
-| TD-004 | Forward/Reply 未实现 | 中 | 需要 SMTP 客户端实现邮件发送 |
+| TD-004 | Forward/Reply 未实现 | 中 | ✅ 已解决 — SMTP 客户端已实现，IMAP/EWS/Graph 集成完成 |
 | TD-005 | 测试覆盖率低 | 高 | 仅 config 和 store 包有测试（2 个测试文件）|
