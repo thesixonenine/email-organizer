@@ -7,6 +7,8 @@ mailboxes:
     protocol: "imap"
     imap_server: "imap.qq.com"
     imap_port: 993
+    smtp_server: "smtp.qq.com"
+    smtp_port: 587
     email: "your-qq-number@qq.com"
     auth_code: "your-authorization-code"
     fetch_count: 500
@@ -15,6 +17,8 @@ mailboxes:
     protocol: "exchange"
     exchange_type: "ews"
     ews_endpoint: "https://mail.company.com/EWS/Exchange.asmx"
+    smtp_server: "smtp.company.com"
+    smtp_port: 587
     email: "your-name@company.com"
     auth_code: "your-password"
     fetch_count: 200
@@ -24,6 +28,8 @@ mailboxes:
     exchange_type: "graph"
     tenant_id: "your-tenant-id"
     client_id: "your-client-id"
+    smtp_server: "smtp.office365.com"
+    smtp_port: 587
     email: "user@contoso.onmicrosoft.com"
     auth_code: "your-oauth-secret"
 
@@ -45,3 +51,21 @@ rules:
       subject_contains: "SPAM"
     action:
       type: "mark_read"
+
+  - name: "转发重要邮件"
+    enabled: true
+    trigger: "on_arrival"
+    conditions:
+      subject_contains: "[紧急]"
+    action:
+      type: "forward"
+      target: "backup@example.com"
+
+  - name: "自动回复通知"
+    enabled: true
+    trigger: "on_arrival"
+    conditions:
+      sender_email: "noreply@company.com"
+    action:
+      type: "reply"
+      reply_text: "感谢您的通知，已收到。"
